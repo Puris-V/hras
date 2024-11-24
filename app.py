@@ -22,6 +22,8 @@ async def index():
         </body>
     </html>
     """
+class CompanyRequest(BaseModel):
+    company_name: str
 
 # Обработка формы
 @app.post("/check_company/")
