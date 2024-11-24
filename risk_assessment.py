@@ -264,6 +264,40 @@ def calculate_risk_score(company_data, sanctions_matches, metrics):
 
     logger.info(f"Итоговый риск компании: {score} ({details['risk_level']})")
     return score, details
+def analyze_company(company_name):
+    """Анализирует риск компании по названию и возвращает результат."""
+    logger.info(f"Начало проверки для компании: {company_name}")
+    html_content, directors_content = fetch_company_details(company_name)
+    if not html_content or not directors_content:
+        return {"error": "Не удалось загрузить данные компании."}
+
+    company_data = parse_company_details(html_content, directors_content)
+    if not company_data:
+        return {"error": "Ошибка парсинга данных компании."}
+
+    logger.info(f"Данные компании: {company_data}")
+    all_names = [company_data["name"]] + [d["name"] for d in company_data["directors"]]
+    sanctions_matches = check_open_sanctions(all_names)
+    sentiments = analyze_news_sentiment(company_data["name"])
+    judicial_cases_count = sum(check_judicial_cases(name) for name in all_names)
+    
+    risk_score, details = calculate_risk_score(
+        company_data,
+        sanctions_matches,
+        {
+            "sanctioned_count": len(sanctions_matches),
+            "news_sentiments": sentiments,
+            "geo_risk": config.GEO_RISK_MAP.get("Cyprus", config.GEO_RISK_MAP["default"]),
+            "judicial_cases": judicial_cases_count,
+        },
+    )
+    return {
+        "company_name": company_data["name"],
+        "risk_level": details["risk_level"],
+        "total_risk": risk_score,
+        "sanctions_count": len(sanctions_matches),
+        "judicial_cases": judicial_cases_count,
+    }
 
 def main():
     """Главная функция скрипта."""
