@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
-from risk_assessment import main as risk_assessment_main  # Импорт вашей логики
+from risk_assessment import analyze_company  # Импорт новой функции
 
 app = FastAPI()
 
@@ -24,20 +24,12 @@ async def index():
     """
 
 # Обработка формы
-@app.post("/check_company/", response_class=HTMLResponse)
-async def check_company(company_name: str = Form(...)):
-    result = risk_assessment_main(company_name)
-    return f"""
-    <html>
-        <head>
-            <title>Risk Assessment Service</title>
-        </head>
-        <body>
-            <h1>Risk Assessment Service</h1>
-            <h2>Results for {company_name}:</h2>
-            <pre>{result}</pre>
-            <a href="/">Go Back</a>
-        </body>
-    </html>
-    """
-	
+@app.post("/check_company/")
+async def check_company(request: CompanyRequest):
+    try:
+        result = analyze_company(request.company_name)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
