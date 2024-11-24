@@ -29,34 +29,37 @@ async def fetch_company_details(company_name):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        page.set_default_timeout(60000)  # Увеличиваем общий таймаут до 60 секунд
         try:
             logger.info("Переходим на сайт")
-            await page.goto(COMPANY_REGISTRY_URL)
-
+            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)  # Увеличенный таймаут
+            
             if await page.locator("#lnkEnglish").is_visible():
-                logger.info("Переключаем сайт на английский язык.")
+                logger.info("Переключаем сайт на английский язык")
                 await page.click("#lnkEnglish")
-                await page.wait_for_timeout(2000)  # Ожидание после клика
-
+                await page.wait_for_load_state("networkidle")
+            
             logger.info("Заполняем форму поиска")
             await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
             await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            await page.wait_for_selector("#ctl00_cphMyMasterCentral_GridView1", timeout=60000)
-
-            logger.info("Переход в карточку компании")
+            await page.wait_for_load_state("networkidle")
+            
+            if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
+                logger.error("Таблица с результатами не найдена.")
+                return None, None
+            
+            logger.info("Открываем карточку компании")
             await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            await page.wait_for_selector("#ctl00_cphMyMasterCentral_directors", timeout=60000)
-
+            await page.wait_for_load_state("networkidle")
+            
             html_content = await page.content()
-
-            logger.info("Переход на вкладку директоров")
+            
+            logger.info("Открываем вкладку с директорами")
             await page.click("#ctl00_cphMyMasterCentral_directors")
-            await page.wait_for_selector("#ctl00_cphMyMasterCentral_OfficialsGrid", timeout=60000)
+            await page.wait_for_load_state("networkidle")
+            
             directors_content = await page.content()
-
+            
             return html_content, directors_content
-
         except Exception as e:
             logger.error(f"Ошибка при взаимодействии с реестром: {e}")
             return None, None
