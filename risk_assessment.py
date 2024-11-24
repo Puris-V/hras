@@ -1,9 +1,10 @@
 import logging
-import asyncio
 from bs4 import BeautifulSoup
 from textblob import TextBlob
 import config
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import sync_playwright
+from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 import requests
 from datetime import datetime, timedelta
 from config import SCORE_WEIGHTS
@@ -25,60 +26,43 @@ COMPANY_REGISTRY_URL = "https://efiling.drcor.mcit.gov.cy/DrcorPublic/SearchForm
 JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 
 
-async def fetch_company_details(company_name):
-    """Fetches company details asynchronously."""
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)  # Change to headless=False for debugging
-        page = await browser.new_page()
+# Синхронная функция для получения данных компании
+def fetch_company_details(company_name):
+    """Поиск компании по имени и получение информации."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
         try:
-            logging.info("Navigating to the company registry site.")
-            response = await page.goto(COMPANY_REGISTRY_URL, timeout=120000)
-            if response:
-                logging.info(f"Page loaded with status: {response.status}")
-            else:
-                logging.warning("No response received from the site.")
-
-            # Additional debugging: console messages
-            page.on("console", lambda msg: logging.info(f"Console log: {msg.text}"))
-
-            if await page.locator("#lnkEnglish").is_visible():
-                logging.info("Switching the site to English.")
-                await page.click("#lnkEnglish")
-                await page.wait_for_load_state("networkidle")
-                await asyncio.sleep(2)  # Add delay
-
-            logging.info("Filling out the search form.")
-            await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
-            await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            await page.wait_for_load_state("networkidle", timeout=120000)
-
-            if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
-                logging.error("Results table not found.")
+            logger.info("Navigating to the company registry site.")
+            page.goto(COMPANY_REGISTRY_URL, timeout=60000)
+            if page.locator("#lnkEnglish").is_visible():
+                logger.info("Switching site to English.")
+                page.click("#lnkEnglish")
+                page.wait_for_load_state("networkidle")
+            page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
+            page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
+            page.wait_for_load_state("networkidle")
+            if not page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
+                logger.error("Result table not found.")
                 return None, None
-
-            logging.info("Accessing company details.")
-            await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            await page.wait_for_load_state("networkidle", timeout=120000)
-            await asyncio.sleep(2)  # Add delay
-
-            html_content = await page.content()
-
-            logging.info("Accessing the directors tab.")
-            await page.click("#ctl00_cphMyMasterCentral_directors")
-            await page.wait_for_load_state("networkidle", timeout=120000)
-
-            directors_content = await page.content()
-
+            logger.info("Accessing company card.")
+            page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
+            page.wait_for_load_state("networkidle")
+            html_content = page.content()
+            page.click("#ctl00_cphMyMasterCentral_directors")
+            page.wait_for_load_state("networkidle")
+            directors_content = page.content()
             return html_content, directors_content
-
-        except PlaywrightTimeoutError as e:
-            logging.error(f"Timeout while interacting with the site: {e}")
         except Exception as e:
-            logging.error(f"An unexpected error occurred: {e}")
+            logger.error(f"Error interacting with the registry: {e}")
+            return None, None
         finally:
-            await browser.close()
+            browser.close()
 
-        return None, None
+# Асинхронная обертка для синхронной функции
+async def fetch_company_details_async(company_name):
+    """Асинхронная обертка для синхронной функции fetch_company_details."""
+    return await run_in_threadpool(fetch_company_details, company_name)
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
@@ -118,7 +102,23 @@ def parse_company_details(html_content, directors_content):
     except Exception as e:
         logger.error(f"Ошибка при парсинге данных компании: {e}")
         return None
+# FastAPI приложение
+app = FastAPI()
 
+@app.post("/check_company/")
+async def check_company(company_name: str):
+    """API для проверки компании."""
+    logger.info(f"Starting check for company: {company_name}")
+    html_content, directors_content = await fetch_company_details_async(company_name)
+    if not html_content or not directors_content:
+        return {"error": "Failed to load company data."}
+
+    company_data = parse_company_details(html_content, directors_content)
+    if not company_data:
+        return {"error": "Error parsing company data."}
+
+    logger.info(f"Company data: {company_data}")
+    return {"company_data": company_data}
 
 def check_open_sanctions(names):
     """
