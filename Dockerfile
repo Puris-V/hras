@@ -1,7 +1,7 @@
-# Используем стабильный базовый образ с Python 3.10
+# Используем стабильный образ Debian Bullseye
 FROM python:3.10-bullseye
 
-# Устанавливаем системные зависимости для Chromium и Playwright
+# Устанавливаем системные зависимости для Playwright и Chromium
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgdk-pixbuf-2.0-0 \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libexpat1 \
     libfontconfig1 \
     libgbm1 \
-    libgobject-2.0-0 \
+    libgobject-2.0 \
     libnspr4 \
     libnss3 \
     libpango-1.0-0 \
@@ -39,11 +39,11 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Устанавливаем Playwright и его браузеры
+# Устанавливаем Playwright и браузеры
 RUN pip install playwright && playwright install
 
 # Копируем приложение
 COPY . /app
 
-# Указываем команду для запуска приложения
+# Указываем команду для запуска
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
