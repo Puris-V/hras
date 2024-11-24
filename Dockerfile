@@ -1,7 +1,13 @@
-# Используем стабильный образ Debian Bullseye
+# Используем базовый образ Python с Debian Bullseye
 FROM python:3.10-bullseye
 
-# Устанавливаем системные зависимости для Playwright и Chromium
+# Устанавливаем репозитории
+RUN echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list && \
+    echo "deb http://security.debian.org/debian-security bullseye-security main" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bullseye-updates main" >> /etc/apt/sources.list && \
+    apt-get update
+
+# Устанавливаем системные зависимости для Playwright/Chromium
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgdk-pixbuf-2.0-0 \
@@ -19,7 +25,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libexpat1 \
     libfontconfig1 \
     libgbm1 \
-    libgobject-2.0 \
     libnspr4 \
     libnss3 \
     libpango-1.0-0 \
