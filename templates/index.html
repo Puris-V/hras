@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Risk Assessment Results</title>
+    <title>Risk Assessment Service</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -23,75 +23,45 @@
         h1 {
             color: #4CAF50;
         }
-        .risk-level {
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        label {
+            font-size: 1rem;
             font-weight: bold;
-            color: red;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
+        input[type="text"] {
+            padding: 0.5rem;
+            font-size: 1rem;
             border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        th, td {
-            padding: 10px;
-            text-align: left;
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
         }
-        th {
-            background-color: #f2f2f2;
+        button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Risk Assessment Results</h1>
-        <p><strong>Company Name:</strong> {{ company_name }}</p>
-        <p><strong>Registration Number:</strong> {{ registration_number }}</p>
-        <p><strong>Status:</strong> {{ status }}</p>
-        <p><strong>Risk Level:</strong> <span class="risk-level">{{ risk_level }}</span></p>
-        <p><strong>Risk Description:</strong> {{ risk_description }}</p>
-
-        <h2>Directors</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Appointed Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for director in directors %}
-                <tr>
-                    <td>{{ director.name }}</td>
-                    <td>{{ director.position }}</td>
-                    <td>{{ director.appointed_date }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h2>Sanctions Matches</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Dataset</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for match in sanctions_matches %}
-                <tr>
-                    <td>{{ match.name }}</td>
-                    <td>{{ match.dataset }}</td>
-                    <td>{{ match.score }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h1>Risk Assessment Service</h1>
+        <form action="/check_company/" method="post">
+            <label for="company_name">Enter Company Name:</label>
+            <input type="text" id="company_name" name="company_name" placeholder="e.g., RCB Finance" required>
+            <button type="submit">Check Risk</button>
+        </form>
     </div>
 </body>
 </html>
