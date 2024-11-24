@@ -2,7 +2,7 @@ import logging
 from bs4 import BeautifulSoup
 from textblob import TextBlob
 import config
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import requests
 from datetime import datetime, timedelta
 from config import SCORE_WEIGHTS
@@ -25,46 +25,58 @@ JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 
 
 async def fetch_company_details(company_name):
-    """Поиск компании по имени и получение информации."""
+    """Fetches company details asynchronously."""
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         try:
-            logger.info("Переходим на сайт")
-            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)  # Увеличенный таймаут
-            
+            # Navigate to the registry website
+            logging.info("Navigating to the company registry site.")
+            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)
+
+            # Switch to English if the button is visible
             if await page.locator("#lnkEnglish").is_visible():
-                logger.info("Переключаем сайт на английский язык")
+                logging.info("Switching the site to English.")
                 await page.click("#lnkEnglish")
                 await page.wait_for_load_state("networkidle")
-            
-            logger.info("Заполняем форму поиска")
+
+            # Fill out the company search form and submit
+            logging.info("Filling out the search form.")
             await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
             await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            await page.wait_for_load_state("networkidle")
-            
+            await page.wait_for_load_state("networkidle", timeout=60000)
+
+            # Check if results table is visible
             if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
-                logger.error("Таблица с результатами не найдена.")
+                logging.error("Results table not found.")
                 return None, None
-            
-            logger.info("Открываем карточку компании")
+
+            # Click the first company in the results
+            logging.info("Accessing company details.")
             await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            await page.wait_for_load_state("networkidle")
-            
+            await page.wait_for_load_state("networkidle", timeout=60000)
+
+            # Get main page content
             html_content = await page.content()
-            
-            logger.info("Открываем вкладку с директорами")
+
+            # Navigate to directors' tab
+            logging.info("Accessing the directors tab.")
             await page.click("#ctl00_cphMyMasterCentral_directors")
-            await page.wait_for_load_state("networkidle")
-            
+            await page.wait_for_load_state("networkidle", timeout=60000)
+
+            # Get directors page content
             directors_content = await page.content()
-            
+
             return html_content, directors_content
+
+        except PlaywrightTimeoutError as e:
+            logging.error(f"Timeout while interacting with the site: {e}")
         except Exception as e:
-            logger.error(f"Ошибка при взаимодействии с реестром: {e}")
-            return None, None
+            logging.error(f"An unexpected error occurred: {e}")
         finally:
             await browser.close()
+
+        return None, None
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
