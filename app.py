@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel  # Импортируем BaseModel для создания модели запроса
-from risk_assessment import analyze_company
+from pydantic import BaseModel
+from risk_assessment import main as risk_assessment_main
 
 
 app = FastAPI()
@@ -29,7 +29,7 @@ class CompanyRequest(BaseModel):
 @app.post("/check_company/")
 async def check_company(request: CompanyRequest):
     try:
-        result = analyze_company(request.company_name)
+        result = risk_assessment_main(request.company_name)
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
         return result
