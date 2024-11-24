@@ -1,12 +1,8 @@
-# Используем минималистичный базовый образ
-FROM python:3.10-slim
+# Используем стабильный базовый образ с Python 3.10
+FROM python:3.10-bullseye
 
-# Устанавливаем переменные окружения для Playwright
-ENV PIP_NO_CACHE_DIR=1 \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# Устанавливаем системные зависимости для Chromium (Playwright)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Устанавливаем системные зависимости для Chromium и Playwright
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgdk-pixbuf-2.0-0 \
     libgtk-3-0 \
@@ -34,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     xdg-utils \
     ca-certificates \
+    fonts-liberation \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,14 +39,11 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Устанавливаем Playwright и загружаем браузеры
+# Устанавливаем Playwright и его браузеры
 RUN pip install playwright && playwright install
 
-# Копируем код приложения
-COPY . .
+# Копируем приложение
+COPY . /app
 
-# Указываем порт для запуска приложения
-EXPOSE 8000
-
-# Команда запуска приложения
+# Указываем команду для запуска приложения
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
