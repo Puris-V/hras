@@ -99,24 +99,6 @@ def parse_company_details(html_content, directors_content):
     except Exception as e:
         logger.error(f"Ошибка при парсинге данных компании: {e}")
         return None
-        
-# Использование в FastAPI маршруте
-app = FastAPI()
-
-@app.post("/check_company/")
-async def check_company(company_name: str):
-    """API для проверки компании."""
-    logger.info(f"Starting check for company: {company_name}")
-    html_content, directors_content = await fetch_company_details_async(company_name)
-    if not html_content or not directors_content:
-        return {"error": "Failed to load company data."}
-
-    company_data = parse_company_details(html_content, directors_content)
-    if not company_data:
-        return {"error": "Error parsing company data."}
-
-    logger.info(f"Company data: {company_data}")
-    return {"company_data": company_data}
     
 def check_open_sanctions(names):
     """
