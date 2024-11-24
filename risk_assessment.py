@@ -30,25 +30,39 @@ async def fetch_company_details(company_name):
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         try:
+            # Переход на сайт
             await page.goto(COMPANY_REGISTRY_URL)
             if await page.locator("#lnkEnglish").is_visible():
                 logger.info("Переключаем сайт на английский язык.")
                 await page.click("#lnkEnglish")
                 await page.wait_for_load_state("networkidle")
+
+            # Заполнение формы и отправка
             await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
             await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
             await page.wait_for_load_state("networkidle")
+
+            # Проверяем наличие таблицы с результатами
             if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
                 logger.error("Таблица с результатами не найдена.")
                 return None, None
+
             logger.info("Переход в карточку компании.")
             await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
             await page.wait_for_load_state("networkidle")
+
+            # Сохраняем HTML содержимое основной страницы
             html_content = await page.content()
+
+            # Переход на вкладку с директорами
             await page.click("#ctl00_cphMyMasterCentral_directors")
             await page.wait_for_load_state("networkidle")
+
+            # Сохраняем HTML содержимое страницы с директорами
             directors_content = await page.content()
+
             return html_content, directors_content
+
         except Exception as e:
             logger.error(f"Ошибка при взаимодействии с реестром: {e}")
             return None, None
