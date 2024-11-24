@@ -29,36 +29,30 @@ async def fetch_company_details(company_name):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
+        page.set_default_timeout(60000)  # Увеличиваем общий таймаут до 60 секунд
         try:
-            # Переход на сайт
+            logger.info("Переходим на сайт")
             await page.goto(COMPANY_REGISTRY_URL)
+
             if await page.locator("#lnkEnglish").is_visible():
                 logger.info("Переключаем сайт на английский язык.")
                 await page.click("#lnkEnglish")
-                await page.wait_for_load_state("networkidle")
+                await page.wait_for_timeout(2000)  # Ожидание после клика
 
-            # Заполнение формы и отправка
+            logger.info("Заполняем форму поиска")
             await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
             await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            await page.wait_for_load_state("networkidle")
+            await page.wait_for_selector("#ctl00_cphMyMasterCentral_GridView1", timeout=60000)
 
-            # Проверяем наличие таблицы с результатами
-            if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
-                logger.error("Таблица с результатами не найдена.")
-                return None, None
-
-            logger.info("Переход в карточку компании.")
+            logger.info("Переход в карточку компании")
             await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            await page.wait_for_load_state("networkidle")
+            await page.wait_for_selector("#ctl00_cphMyMasterCentral_directors", timeout=60000)
 
-            # Сохраняем HTML содержимое основной страницы
             html_content = await page.content()
 
-            # Переход на вкладку с директорами
+            logger.info("Переход на вкладку директоров")
             await page.click("#ctl00_cphMyMasterCentral_directors")
-            await page.wait_for_load_state("networkidle")
-
-            # Сохраняем HTML содержимое страницы с директорами
+            await page.wait_for_selector("#ctl00_cphMyMasterCentral_OfficialsGrid", timeout=60000)
             directors_content = await page.content()
 
             return html_content, directors_content
@@ -68,7 +62,6 @@ async def fetch_company_details(company_name):
             return None, None
         finally:
             await browser.close()
-
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
