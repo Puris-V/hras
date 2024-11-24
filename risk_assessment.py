@@ -264,6 +264,7 @@ def calculate_risk_score(company_data, sanctions_matches, metrics):
 
     logger.info(f"Итоговый риск компании: {score} ({details['risk_level']})")
     return score, details
+    
 def analyze_company(company_name):
     """Анализирует риск компании по названию и возвращает результат."""
     logger.info(f"Начало проверки для компании: {company_name}")
@@ -298,6 +299,7 @@ def analyze_company(company_name):
         "sanctions_count": len(sanctions_matches),
         "judicial_cases": judicial_cases_count,
     }
+
 
 def main():
     """Главная функция скрипта."""
