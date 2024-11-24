@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
-from risk_assessment import main as risk_assessment_main  # Импорт вашей логики
 
 app = FastAPI()
 
