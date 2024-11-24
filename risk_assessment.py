@@ -38,7 +38,7 @@ async def fetch_company_details(company_name):
         
         # Проверка доступности сайта
         try:
-            response = requests.get(COMPANY_REGISTRY_URL, timeout=30)
+            response = requests.get(COMPANY_REGISTRY_URL, timeout=300)
             response.raise_for_status()
             logger.info(f"Сайт доступен. Код ответа: {response.status_code}")
         except requests.RequestException as e:
