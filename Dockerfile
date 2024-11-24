@@ -51,4 +51,4 @@ RUN pip install playwright && playwright install
 COPY . /app
 
 # Указываем команду для запуска
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
