@@ -9,6 +9,7 @@ from fastapi.concurrency import run_in_threadpool
 import requests
 from datetime import datetime, timedelta
 from config import SCORE_WEIGHTS
+import time
 
 # Диапазоны уровней риска
 RISK_LEVELS = [
@@ -37,7 +38,7 @@ async def fetch_company_details(company_name):
         
         # Проверка доступности сайта
         try:
-            response = requests.get(COMPANY_REGISTRY_URL, timeout=10)
+            response = requests.get(COMPANY_REGISTRY_URL, timeout=30)
             response.raise_for_status()
             logger.info(f"Сайт доступен. Код ответа: {response.status_code}")
         except requests.RequestException as e:
@@ -47,7 +48,7 @@ async def fetch_company_details(company_name):
         # Основная логика взаимодействия с сайтом
         try:
             logger.info("Navigating to the company registry site.")
-            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)
+            await page.goto(COMPANY_REGISTRY_URL, timeout=6000)
             if await page.locator("#lnkEnglish").is_visible():
                 logger.info("Switching site to English.")
                 await page.click("#lnkEnglish")
