@@ -1,8 +1,8 @@
 # Используем базовый образ Python
 FROM python:3.10-slim
 
-# Устанавливаем необходимые системные зависимости для Playwright
-RUN apt-get update && apt-get install -y \
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgobject-2.0-0 \
     libnss3 \
@@ -32,21 +32,16 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем Playwright
-RUN pip install --no-cache-dir playwright
-
-# Устанавливаем браузеры Playwright
-RUN playwright install --with-deps chromium
-
-# Устанавливаем остальные зависимости
-COPY requirements.txt .
+# Устанавливаем Python зависимости
+COPY requirements.txt /app/requirements.txt
+WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Указываем рабочую директорию
-WORKDIR /app
+# Устанавливаем Playwright и скачиваем браузеры
+RUN pip install playwright && playwright install --with-deps
 
-# Копируем исходный код
+# Копируем приложение в контейнер
 COPY . .
 
-# Указываем команду запуска
+# Указываем команду для запуска приложения
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
