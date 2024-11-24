@@ -38,7 +38,7 @@ async def check_company(request: Request, company_name: str = Form(None)):
     
     # Подготовка данных для шаблона
     return templates.TemplateResponse(
-        "index.html",
+        "result.html",
         {
             "request": request,
             "company_name": result["company_data"]["name"],
