@@ -1,14 +1,16 @@
-# Базовый образ Python
 FROM python:3.10-slim
 
-# Устанавливаем рабочую директорию внутри контейнера
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы проекта в контейнер
+# Копируем файлы в контейнер
 COPY . .
 
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir fastapi uvicorn python-multipart requests bs4 textblob
+RUN pip install --no-cache-dir fastapi uvicorn python-multipart requests bs4 textblob playwright
 
-# Запуск приложения
+# Устанавливаем браузеры Playwright
+RUN playwright install
+
+# Запускаем приложение
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
