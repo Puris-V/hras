@@ -2,7 +2,7 @@ import logging
 from bs4 import BeautifulSoup
 from textblob import TextBlob
 import config
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 import requests
 from datetime import datetime, timedelta
 from config import SCORE_WEIGHTS
@@ -24,35 +24,36 @@ COMPANY_REGISTRY_URL = "https://efiling.drcor.mcit.gov.cy/DrcorPublic/SearchForm
 JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 
 
-def fetch_company_details(company_name):
+async def fetch_company_details(company_name):
     """Поиск компании по имени и получение информации."""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
         try:
-            page.goto(COMPANY_REGISTRY_URL)
-            if page.locator("#lnkEnglish").is_visible():
+            await page.goto(COMPANY_REGISTRY_URL)
+            if await page.locator("#lnkEnglish").is_visible():
                 logger.info("Переключаем сайт на английский язык.")
-                page.click("#lnkEnglish")
-                page.wait_for_load_state("networkidle")
-            page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
-            page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            page.wait_for_load_state("networkidle")
-            if not page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
+                await page.click("#lnkEnglish")
+                await page.wait_for_load_state("networkidle")
+            await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
+            await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
+            await page.wait_for_load_state("networkidle")
+            if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
                 logger.error("Таблица с результатами не найдена.")
                 return None, None
             logger.info("Переход в карточку компании.")
-            page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            page.wait_for_load_state("networkidle")
-            html_content = page.content()
-            page.click("#ctl00_cphMyMasterCentral_directors")
-            page.wait_for_load_state("networkidle")
-            directors_content = page.content()
+            await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
+            await page.wait_for_load_state("networkidle")
+            html_content = await page.content()
+            await page.click("#ctl00_cphMyMasterCentral_directors")
+            await page.wait_for_load_state("networkidle")
+            directors_content = await page.content()
             return html_content, directors_content
         except Exception as e:
             logger.error(f"Ошибка при взаимодействии с реестром: {e}")
+            return None, None
         finally:
-            browser.close()
+            await browser.close()
 
 
 def parse_company_details(html_content, directors_content):
@@ -301,12 +302,11 @@ def analyze_company(company_name):
     }
 
 
-# risk_assessment.py
 
-def main(company_name: str):
-    """Основная функция для анализа риска"""
+async def main(company_name: str):
+    """Основная функция для анализа риска."""
     logger.info(f"Начало проверки для компании: {company_name}")
-    html_content, directors_content = fetch_company_details(company_name)
+    html_content, directors_content = await fetch_company_details(company_name)
     if not html_content or not directors_content:
         return {"error": "Не удалось загрузить данные компании"}
 
