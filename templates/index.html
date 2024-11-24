@@ -1,23 +1,97 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Risk Assessment Service</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment Results</title>
     <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; }
-        header { background-color: #4CAF50; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: 500; }
-        main { max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        footer { text-align: center; margin-top: 2rem; color: #777; font-size: 0.9rem; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .risk-level {
+            font-weight: bold;
+            color: red;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
-    <header>Risk Assessment Service</header>
-    <main>
-        <form action="/check_company/" method="post">
-            <label for="company_name">Enter Company Name:</label>
-            <input type="text" id="company_name" name="company_name" placeholder="e.g., RCB Finance" required>
-            <button type="submit">Check</button>
-        </form>
-    </main>
-    <footer>&copy; 2024 Risk Assessment Service</footer>
+    <div class="container">
+        <h1>Risk Assessment Results</h1>
+        <p><strong>Company Name:</strong> {{ company_name }}</p>
+        <p><strong>Registration Number:</strong> {{ registration_number }}</p>
+        <p><strong>Status:</strong> {{ status }}</p>
+        <p><strong>Risk Level:</strong> <span class="risk-level">{{ risk_level }}</span></p>
+        <p><strong>Risk Description:</strong> {{ risk_description }}</p>
+
+        <h2>Directors</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Appointed Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for director in directors %}
+                <tr>
+                    <td>{{ director.name }}</td>
+                    <td>{{ director.position }}</td>
+                    <td>{{ director.appointed_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Sanctions Matches</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Dataset</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in sanctions_matches %}
+                <tr>
+                    <td>{{ match.name }}</td>
+                    <td>{{ match.dataset }}</td>
+                    <td>{{ match.score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
