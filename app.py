@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from risk_assessment import main as risk_assessment_main
 
 app = FastAPI()
 
-# Главная страница
+# Определение модели данных
+class CompanyRequest(BaseModel):
+    company_name: str
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     return """
@@ -26,8 +29,8 @@ async def index():
 
 @app.post("/check_company/")
 async def check_company(
-    company_name: str = Form(None),  # Для form-data из браузера
-    json_request: CompanyRequest = None,  # Для JSON-запросов
+    company_name: str = Form(None),  # Для form-data
+    json_request: CompanyRequest = None,  # Для JSON
 ):
     if company_name:
         result = await risk_assessment_main(company_name)  # Асинхронный вызов
