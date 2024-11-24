@@ -1,8 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from risk_assessment import main as risk_assessment_main
-
 
 app = FastAPI()
 
@@ -24,12 +23,8 @@ async def index():
         </body>
     </html>
     """
-class CompanyRequest(BaseModel):
-    company_name: str
-    
+
 @app.post("/check_company/")
-async def check_company(request: CompanyRequest):
-    company_name = request.company_name
+async def check_company(company_name: str = Form(...)):
     result = risk_assessment_main(company_name)  # Если вы используете основную функцию main
     return {"status": "success", "data": result}
-
