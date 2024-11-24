@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from bs4 import BeautifulSoup
 from textblob import TextBlob
 import config
@@ -27,44 +28,45 @@ JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 async def fetch_company_details(company_name):
     """Fetches company details asynchronously."""
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=True)  # Change to headless=False for debugging
         page = await browser.new_page()
         try:
-            # Navigate to the registry website
             logging.info("Navigating to the company registry site.")
-            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)
+            response = await page.goto(COMPANY_REGISTRY_URL, timeout=120000)
+            if response:
+                logging.info(f"Page loaded with status: {response.status}")
+            else:
+                logging.warning("No response received from the site.")
 
-            # Switch to English if the button is visible
+            # Additional debugging: console messages
+            page.on("console", lambda msg: logging.info(f"Console log: {msg.text}"))
+
             if await page.locator("#lnkEnglish").is_visible():
                 logging.info("Switching the site to English.")
                 await page.click("#lnkEnglish")
                 await page.wait_for_load_state("networkidle")
+                await asyncio.sleep(2)  # Add delay
 
-            # Fill out the company search form and submit
             logging.info("Filling out the search form.")
             await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
             await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            await page.wait_for_load_state("networkidle", timeout=60000)
+            await page.wait_for_load_state("networkidle", timeout=120000)
 
-            # Check if results table is visible
             if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
                 logging.error("Results table not found.")
                 return None, None
 
-            # Click the first company in the results
             logging.info("Accessing company details.")
             await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            await page.wait_for_load_state("networkidle", timeout=60000)
+            await page.wait_for_load_state("networkidle", timeout=120000)
+            await asyncio.sleep(2)  # Add delay
 
-            # Get main page content
             html_content = await page.content()
 
-            # Navigate to directors' tab
             logging.info("Accessing the directors tab.")
             await page.click("#ctl00_cphMyMasterCentral_directors")
-            await page.wait_for_load_state("networkidle", timeout=60000)
+            await page.wait_for_load_state("networkidle", timeout=120000)
 
-            # Get directors page content
             directors_content = await page.content()
 
             return html_content, directors_content
