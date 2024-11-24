@@ -1,42 +1,32 @@
-from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
+# config.py
 
-app = FastAPI()
+import os
 
-# Главная страница
-@app.get("/", response_class=HTMLResponse)
-async def index():
-    return """
-    <html>
-        <head>
-            <title>Risk Assessment Service</title>
-        </head>
-        <body>
-            <h1>Risk Assessment Service</h1>
-            <form action="/check_company/" method="post">
-                <label for="company_name">Enter Company Name:</label>
-                <input type="text" id="company_name" name="company_name" required>
-                <button type="submit">Check</button>
-            </form>
-        </body>
-    </html>
-    """
+# API ключи и настройки
+OPEN_SANCTIONS_API_KEY = os.getenv("OPEN_SANCTIONS_API_KEY", "cd58c6ebfd7434a7283e11d1cac43c59")
+GOOGLE_NEWS_API_KEY = os.getenv("GOOGLE_NEWS_API_KEY", "7f7803ffc67447478f8d997e7ff19c91")
+OPEN_SANCTIONS_API_URL = "https://api.opensanctions.org/match/default"
+GOOGLE_NEWS_API_URL = "https://newsapi.org/v2/everything"
 
-# Обработка формы
-@app.post("/check_company/", response_class=HTMLResponse)
-async def check_company(company_name: str = Form(...)):
-    result = risk_assessment_main(company_name)
-    return f"""
-    <html>
-        <head>
-            <title>Risk Assessment Service</title>
-        </head>
-        <body>
-            <h1>Risk Assessment Service</h1>
-            <h2>Results for {company_name}:</h2>
-            <pre>{result}</pre>
-            <a href="/">Go Back</a>
-        </body>
-    </html>
-    """
-	
+# Геополитический риск
+GEO_RISK_MAP = {
+    "default": 100,
+    "Cyprus": 100,
+    "USA": 50,
+    "Russia": 500,
+    "Ukraine": 700,
+    # Добавляйте другие страны по мере необходимости
+}
+
+# Весовые коэффициенты для расчета риска
+SCORE_WEIGHTS = {
+    "status": {
+        "ACTIVE": 0,
+        "DISSOLVED": 100,
+        "INACTIVE": 200,
+    },
+    "base_sanction_risk": 50,
+    "judicial_cases": 20,
+    "negative_sentiment": 10,
+    "geo_risk": 1,
+}
