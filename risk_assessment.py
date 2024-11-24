@@ -25,8 +25,10 @@ logger = logging.getLogger("RiskAssessment")
 COMPANY_REGISTRY_URL = "https://efiling.drcor.mcit.gov.cy/DrcorPublic/SearchForm.aspx?sc=0"
 JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 
+async def fetch_company_details_async(company_name):
+    """Асинхронная обертка для синхронной функции fetch_company_details."""
+    return await run_in_threadpool(fetch_company_details, company_name)
 
-# Синхронная функция для получения данных компании
 def fetch_company_details(company_name):
     """Поиск компании по имени и получение информации."""
     with sync_playwright() as p:
@@ -58,11 +60,6 @@ def fetch_company_details(company_name):
             return None, None
         finally:
             browser.close()
-
-# Асинхронная обертка для синхронной функции
-async def fetch_company_details_async(company_name):
-    """Асинхронная обертка для синхронной функции fetch_company_details."""
-    return await run_in_threadpool(fetch_company_details, company_name)
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
@@ -102,9 +99,7 @@ def parse_company_details(html_content, directors_content):
     except Exception as e:
         logger.error(f"Ошибка при парсинге данных компании: {e}")
         return None
-# FastAPI приложение
-app = FastAPI()
-
+# Использование в FastAPI маршруте
 @app.post("/check_company/")
 async def check_company(company_name: str):
     """API для проверки компании."""
@@ -119,7 +114,6 @@ async def check_company(company_name: str):
 
     logger.info(f"Company data: {company_data}")
     return {"company_data": company_data}
-
 def check_open_sanctions(names):
     """
     Проверяет имена в OpenSanctions API.
