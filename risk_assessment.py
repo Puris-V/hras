@@ -29,8 +29,17 @@ JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 async def fetch_company_details(company_name):
     """Асинхронная функция для получения данных о компании."""
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+    headless=True,
+    args=["--no-sandbox", "--disable-setuid-sandbox"]
+)
         page = await browser.new_page()
+        try:
+            response = requests.get(COMPANY_REGISTRY_URL, timeout=10)
+            response.raise_for_status()
+            logger.info(f"Сайт доступен. Код ответа: {response.status_code}")
+        except requests.RequestException as e:
+    logger.error(f"Сайт недоступен. Ошибка: {e}")
         try:
             logger.info("Navigating to the company registry site.")
             await page.goto(COMPANY_REGISTRY_URL, timeout=60000)
@@ -57,6 +66,7 @@ async def fetch_company_details(company_name):
             return None, None
         finally:
             await browser.close()
+        
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
