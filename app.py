@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
-from risk_assessment import analyze_company  # Импорт новой функции
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel  # Импортируем BaseModel для создания модели запроса
+from risk_assessment import analyze_company
+
 
 app = FastAPI()
 
@@ -24,8 +25,7 @@ async def index():
     """
 class CompanyRequest(BaseModel):
     company_name: str
-
-# Обработка формы
+    
 @app.post("/check_company/")
 async def check_company(request: CompanyRequest):
     try:
