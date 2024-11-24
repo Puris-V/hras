@@ -25,6 +25,16 @@ async def index():
     """
 
 @app.post("/check_company/")
-async def check_company(company_name: str = Form(...)):
-    result = risk_assessment_main(company_name)  # Если вы используете основную функцию main
-    return {"status": "success", "data": result}
+async def check_company(
+    company_name: str = Form(None),  # Для form-data из браузера
+    json_request: CompanyRequest = None,  # Для JSON-запросов
+):
+    if company_name:
+        result = await risk_assessment_main(company_name)  # Асинхронный вызов
+        return {"status": "success", "data": result}
+
+    if json_request:
+        result = await risk_assessment_main(json_request.company_name)  # Асинхронный вызов
+        return {"status": "success", "data": result}
+
+    raise HTTPException(status_code=400, detail="Invalid input format. Provide form-data or JSON.")
