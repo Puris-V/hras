@@ -330,14 +330,13 @@ async def main(company_name: str):
     if not company_data:
         return {"error": "Ошибка парсинга данных компании"}
 
-    return {"company_data": company_data}
-
     logger.info(f"Данные компании: {company_data}")
     all_names = [company_data["name"]] + [d["name"] for d in company_data["directors"]]
+    
     sanctions_matches = check_open_sanctions(all_names)
     sentiments = analyze_news_sentiment(company_data["name"])
-
     judicial_cases_count = sum(check_judicial_cases(name) for name in all_names)
+    
     risk_score, details = calculate_risk_score(
         company_data,
         sanctions_matches,
@@ -348,12 +347,16 @@ async def main(company_name: str):
             "judicial_cases": judicial_cases_count,
         },
     )
+
     return {
         "company_data": company_data,
         "sanctions_matches": sanctions_matches,
+        "news_sentiments": sentiments,
+        "judicial_cases": judicial_cases_count,
         "risk_score": risk_score,
         "risk_details": details,
     }
+
 
 if __name__ == "__main__":
     main()
