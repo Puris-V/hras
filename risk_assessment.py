@@ -99,7 +99,10 @@ def parse_company_details(html_content, directors_content):
     except Exception as e:
         logger.error(f"Ошибка при парсинге данных компании: {e}")
         return None
+        
 # Использование в FastAPI маршруте
+app = FastAPI()
+
 @app.post("/check_company/")
 async def check_company(company_name: str):
     """API для проверки компании."""
@@ -114,6 +117,7 @@ async def check_company(company_name: str):
 
     logger.info(f"Company data: {company_data}")
     return {"company_data": company_data}
+    
 def check_open_sanctions(names):
     """
     Проверяет имена в OpenSanctions API.
