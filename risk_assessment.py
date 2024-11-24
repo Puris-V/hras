@@ -301,19 +301,18 @@ def analyze_company(company_name):
     }
 
 
-def main():
-    """Главная функция скрипта."""
-    company_name = input("Введите имя компании: ")
+# risk_assessment.py
+
+def main(company_name: str):
+    """Основная функция для анализа риска"""
     logger.info(f"Начало проверки для компании: {company_name}")
     html_content, directors_content = fetch_company_details(company_name)
     if not html_content or not directors_content:
-        logger.error("Не удалось загрузить данные компании.")
-        return
+        return {"error": "Не удалось загрузить данные компании"}
 
     company_data = parse_company_details(html_content, directors_content)
     if not company_data:
-        logger.error("Ошибка парсинга данных компании.")
-        return
+        return {"error": "Ошибка парсинга данных компании"}
 
     logger.info(f"Данные компании: {company_data}")
     all_names = [company_data["name"]] + [d["name"] for d in company_data["directors"]]
@@ -323,7 +322,7 @@ def main():
     judicial_cases_count = sum(check_judicial_cases(name) for name in all_names)
     risk_score, details = calculate_risk_score(
         company_data,
-        company_data["directors"],
+        sanctions_matches,
         {
             "sanctioned_count": len(sanctions_matches),
             "news_sentiments": sentiments,
@@ -331,10 +330,12 @@ def main():
             "judicial_cases": judicial_cases_count,
         },
     )
-    logger.info(f"Совпадения в санкционных списках: {sanctions_matches}")
-    logger.info(f"Итоговый риск компании: {risk_score}")
-    logger.debug(f"Детали риска: {details}")
-
+    return {
+        "company_data": company_data,
+        "sanctions_matches": sanctions_matches,
+        "risk_score": risk_score,
+        "risk_details": details,
+    }
 
 if __name__ == "__main__":
     main()
