@@ -5,7 +5,6 @@ from risk_assessment import main as risk_assessment_main
 
 app = FastAPI()
 
-# Определение модели данных
 class CompanyRequest(BaseModel):
     company_name: str
 
@@ -96,15 +95,15 @@ async def index():
 
 @app.post("/check_company/")
 async def check_company(
-    company_name: str = Form(None),  # Для form-data
-    json_request: CompanyRequest = None,  # Для JSON
+    company_name: str = Form(None), 
+    json_request: CompanyRequest = None
 ):
     if company_name:
-        result = await risk_assessment_main(company_name)  # Асинхронный вызов
+        result = await risk_assessment_main(company_name)
         return {"status": "success", "data": result}
 
     if json_request:
-        result = await risk_assessment_main(json_request.company_name)  # Асинхронный вызов
+        result = await risk_assessment_main(json_request.company_name)
         return {"status": "success", "data": result}
 
     raise HTTPException(status_code=400, detail="Invalid input format. Provide form-data or JSON.")
