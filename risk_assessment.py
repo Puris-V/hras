@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from textblob import TextBlob
 import config
 from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 import requests
@@ -25,41 +26,37 @@ logger = logging.getLogger("RiskAssessment")
 COMPANY_REGISTRY_URL = "https://efiling.drcor.mcit.gov.cy/DrcorPublic/SearchForm.aspx?sc=0"
 JUDICIAL_REGISTRY_URL = "https://www.cylaw.org/cgi-bin/open.pl"
 
-async def fetch_company_details_async(company_name):
-    """Асинхронная обертка для синхронной функции fetch_company_details."""
-    return await run_in_threadpool(fetch_company_details, company_name)
-
-def fetch_company_details(company_name):
-    """Поиск компании по имени и получение информации."""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+async def fetch_company_details(company_name):
+    """Асинхронная функция для получения данных о компании."""
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
         try:
             logger.info("Navigating to the company registry site.")
-            page.goto(COMPANY_REGISTRY_URL, timeout=60000)
-            if page.locator("#lnkEnglish").is_visible():
+            await page.goto(COMPANY_REGISTRY_URL, timeout=60000)
+            if await page.locator("#lnkEnglish").is_visible():
                 logger.info("Switching site to English.")
-                page.click("#lnkEnglish")
-                page.wait_for_load_state("networkidle")
-            page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
-            page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
-            page.wait_for_load_state("networkidle")
-            if not page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
+                await page.click("#lnkEnglish")
+                await page.wait_for_load_state("networkidle")
+            await page.fill("#ctl00_cphMyMasterCentral_ucSearch_txtName", company_name)
+            await page.click("#ctl00_cphMyMasterCentral_ucSearch_lbtnSearch")
+            await page.wait_for_load_state("networkidle")
+            if not await page.locator("#ctl00_cphMyMasterCentral_GridView1").is_visible():
                 logger.error("Result table not found.")
                 return None, None
             logger.info("Accessing company card.")
-            page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
-            page.wait_for_load_state("networkidle")
-            html_content = page.content()
-            page.click("#ctl00_cphMyMasterCentral_directors")
-            page.wait_for_load_state("networkidle")
-            directors_content = page.content()
+            await page.locator("#ctl00_cphMyMasterCentral_GridView1 tr.basket").first.click()
+            await page.wait_for_load_state("networkidle")
+            html_content = await page.content()
+            await page.click("#ctl00_cphMyMasterCentral_directors")
+            await page.wait_for_load_state("networkidle")
+            directors_content = await page.content()
             return html_content, directors_content
         except Exception as e:
             logger.error(f"Error interacting with the registry: {e}")
             return None, None
         finally:
-            browser.close()
+            await browser.close()
 
 def parse_company_details(html_content, directors_content):
     """Парсит информацию о компании и её директорах."""
@@ -308,8 +305,7 @@ def analyze_company(company_name):
 
 
 async def main(company_name: str):
-    """Основная функция для анализа риска."""
-    logger.info(f"Начало проверки для компании: {company_name}")
+    """Основная логика анализа риска."""
     html_content, directors_content = await fetch_company_details(company_name)
     if not html_content or not directors_content:
         return {"error": "Не удалось загрузить данные компании"}
@@ -317,6 +313,8 @@ async def main(company_name: str):
     company_data = parse_company_details(html_content, directors_content)
     if not company_data:
         return {"error": "Ошибка парсинга данных компании"}
+
+    return {"company_data": company_data}
 
     logger.info(f"Данные компании: {company_data}")
     all_names = [company_data["name"]] + [d["name"] for d in company_data["directors"]]
