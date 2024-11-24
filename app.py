@@ -29,10 +29,7 @@ class CompanyRequest(BaseModel):
     
 @app.post("/check_company/")
 async def check_company(request: CompanyRequest):
-    try:
-        result = risk_assessment_main(request.company_name)
-        if "error" in result:
-            raise HTTPException(status_code=400, detail=result["error"])
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    company_name = request.company_name
+    result = risk_assessment_main(company_name)  # Если вы используете основную функцию main
+    return {"status": "success", "data": result}
+
