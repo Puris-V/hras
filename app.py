@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from risk_assessment import main as risk_assessment_main
@@ -36,7 +36,21 @@ async def check_company(request: Request, company_name: str = Form(None)):
         "High": "The company has significant risks. Proceed with caution.",
         "Critical": "The company is extremely risky. Avoid business dealings."
     }.get(risk_level, "Risk level description unavailable.")
-
+ # Подготовка данных для шаблона
+    return templates.TemplateResponse(
+        "result.html",
+        {
+            "request": request,
+            "company_name": result["company_data"]["name"],
+            "registration_number": result["company_data"]["registration_number"],
+            "status": result["company_data"]["status"],
+            "risk_level": risk_level,
+            "risk_description": risk_description,
+            "directors": result["company_data"]["directors"],
+            "sanctions_matches": result.get("sanctions_matches", [])
+        }
+    )
+    
 @app.post("/parse")
 async def parse_company_api(request: Request):
     try:
@@ -58,17 +72,3 @@ async def parse_company_api(request: Request):
         logging.error(f"API error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-    # Подготовка данных для шаблона
-    return templates.TemplateResponse(
-        "result.html",
-        {
-            "request": request,
-            "company_name": result["company_data"]["name"],
-            "registration_number": result["company_data"]["registration_number"],
-            "status": result["company_data"]["status"],
-            "risk_level": risk_level,
-            "risk_description": risk_description,
-            "directors": result["company_data"]["directors"],
-            "sanctions_matches": result.get("sanctions_matches", [])
-        }
-    )
