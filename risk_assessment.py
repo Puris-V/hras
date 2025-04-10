@@ -357,6 +357,6 @@ async def main(company_name: str):
         "risk_details": details,
     }
 
+
 if __name__ == "__main__":
-
-
+    main()
