@@ -10,7 +10,6 @@ import requests
 from datetime import datetime, timedelta
 from config import SCORE_WEIGHTS
 import time
-import uvicorn
 
 # Диапазоны уровней риска
 RISK_LEVELS = [
@@ -357,24 +356,7 @@ async def main(company_name: str):
         "risk_score": risk_score,
         "risk_details": details,
     }
-@app.post("/parse")
-async def parse_company_api(request: Request):
-    try:
-        data = await request.json()
-        company_name = data.get("company_name")
-        if not company_name:
-            return JSONResponse(status_code=400, content={"error": "Missing company_name"})
-
-        result = await main(company_name)
-        return JSONResponse(content=result)
-    
-    except Exception as e:
-        logger.error(f"Ошибка в API: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
 
