@@ -35,6 +35,32 @@ async def check_company(request: Request, company_name: str = Form(None)):
         "High": "The company has significant risks. Proceed with caution.",
         "Critical": "The company is extremely risky. Avoid business dealings."
     }.get(risk_level, "Risk level description unavailable.")
+
+   @app.post("/parse")
+async def parse_company_api(request: Request):
+    try:
+        data = await request.json()
+        company_name = data.get("company_name")
+        if not company_name:
+            return JSONResponse(status_code=400, content={"error": "Missing company_name"})
+
+        html_content, directors_content = await fetch_company_details(company_name)
+        if not html_content or not directors_content:
+            return JSONResponse(status_code=404, content={"error": "Company not found"})
+
+        company_data = parse_company_details(html_content, directors_content)
+        if not company_data:
+            return JSONResponse(status_code=500, content={"error": "Error parsing company data"})
+
+        # Дополнительная логика обработки company_data
+
+        return JSONResponse(content={"message": "Success"})
+    except Exception as e:
+        logging.error(f"API error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+        
+        import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
     
     # Подготовка данных для шаблона
     return templates.TemplateResponse(
