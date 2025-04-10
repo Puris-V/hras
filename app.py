@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from risk_assessment import main as risk_assessment_main
+from risk_assessment import fetch_company_details, parse_company_details
 
 app = FastAPI()
 
