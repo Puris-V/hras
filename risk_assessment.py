@@ -372,5 +372,28 @@ async def parse_company_api(request: Request):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+from fastapi.responses import JSONResponse
+from fastapi import Request
+import uvicorn
+
+app = FastAPI()
+
+@app.post("/parse")
+async def parse_company_api(request: Request):
+    try:
+        data = await request.json()
+        company_name = data.get("company_name")
+        if not company_name:
+            return JSONResponse(status_code=400, content={"error": "Missing company_name"})
+
+        result = await main(company_name)
+        return JSONResponse(content=result)
+    
+    except Exception as e:
+        logger.error(f"Ошибка в API: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 if __name__ == "__main__":
-    main()
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
