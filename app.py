@@ -60,9 +60,6 @@ async def parse_company_api(request: Request):
         logging.error(f"API error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
         
-        import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    
     # Подготовка данных для шаблона
     return templates.TemplateResponse(
         "result.html",
@@ -77,3 +74,6 @@ async def parse_company_api(request: Request):
             "sanctions_matches": result.get("sanctions_matches", [])
         }
     )
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
