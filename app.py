@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from risk_assessment import main as risk_assessment_main
+from risk_assessment import main as risk_assessment_main, fetch_company_details, parse_company_details
 import logging
 
 app = FastAPI()
