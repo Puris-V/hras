@@ -3,7 +3,7 @@
 import os
 
 # API ключи и настройки
-OPEN_SANCTIONS_API_KEY = os.getenv("OPEN_SANCTIONS_API_KEY", "cd58c6ebfd7434a7283e11d1cac43c59")
+OPEN_SANCTIONS_API_KEY = os.getenv("OPEN_SANCTIONS_API_KEY", "cd58c6ebfd7434a7283e11d1cac00000")
 GOOGLE_NEWS_API_KEY = os.getenv("GOOGLE_NEWS_API_KEY", "7f7803ffc67447478f8d997e7ff19c91")
 OPEN_SANCTIONS_API_URL = "https://api.opensanctions.org/match/default"
 GOOGLE_NEWS_API_URL = "https://newsapi.org/v2/everything"
